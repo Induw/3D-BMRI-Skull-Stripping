@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D CompNet Skull Stripping</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            color: #333;
+            background-color: #E6EFFB; /* Lighter shade of cornflower blue for background */
+        }
+        .content {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        h1 {
+            color: #3B5998; /* Cornflower blue, similar to Facebook's theme */
+            margin-top: 20px;
+            font-size: 3rem;
+            text-align: center;
+            width: 100%;
+        }
+        .container {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            gap: 50px; /* Increased space between the boxes */
+        }
+        .upload-download-container {
+            display: flex;
+            justify-content: center;
+            gap: 80px; /* Space between upload and download buttons */
+            margin-bottom: 10px;
+            margin-top: 50px; /* Space above the result container */
+        }
+
+        /* Adjusted tooltip text positioning for better visibility with buttons */
+        .tooltip .tooltiptext {
+            bottom: 150%; /* Adjust if needed to position the tooltip text correctly */
+            left: 50%;
+            font-size: 12px;
+            margin-left: -60px; /* Adjust this value to center the tooltip */
+        }
+        /* Tooltip container */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+        /* Result Container */
+        .result-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 20px;
+        }
+
+        /* Result Box */
+        .result-box {
+            width: 1200px; /* Width of the box */
+            height: 400px; /* Height of the box */
+            border: 2px solid #3B5998; /* Border color */
+            margin-top: 10px;
+            background-color: #F0F0F0; /* Background color */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .status-progress-container {
+            width: 80%;
+            margin: 20px auto; /* Adjust top margin as needed, auto centers it horizontally */
+            text-align: center;
+            font-size: medium;
+        }
+
+        .progress-bar-container {
+            width: 60%; /* Makes the progress bar container take the full width of its parent */
+            background-color: #eee;
+            border-radius: 10px;
+            height: 20px;
+            margin: 10px auto; /* Adjust height as needed */
+            display: flex; /* Use flexbox to align child elements */
+            justify-content: center; 
+        }
+
+        .progress-bar {
+            height: 100%;
+            background-color: #3B5998; /* Cornflower blue, similar to your button color */
+            border-radius: 10px;
+            width: 0%; /* Initial progress is 0 */
+            transition: width 0.5s ease-in-out; /* Smooth transition for width changes */
+        }
+
+        #statusMessage{
+            font-size: 24px;
+            color: black;
+        }
+
+        /* Tooltip text */
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 120px;
+            background-color: #555;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px 0;
+            /* Position the tooltip */
+            position: absolute;
+            z-index: 1;
+            bottom: 100%;
+            left: 50%;
+            margin-left: -60px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        /* Tooltip arrow */
+        .tooltip .tooltiptext::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #555 transparent transparent transparent;
+        }
+
+        /* Show the tooltip text when you mouse over the tooltip container */
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+        #download-btn {
+            margin-top: -10px;
+        }
+        .label {
+            text-align: center;
+            margin-top: 10px;
+        }
+        button {
+            background-color: #3B5998; /* Cornflower blue */
+            color: white;
+            padding: 15px 30px; /* Larger button */
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 1.4rem; /* Larger text */
+            transition: background-color 0.3s; /* Smooth transition for hover effect */
+            margin-top: 20px;
+        }
+        button:hover {
+            background-color: #456eb5; /* Darker shade on hover */
+        }
+        .menu {
+            width: 200px;
+            background-color: #F7F7F7;
+            padding: 20px;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+        }
+        .menu h2 {
+            font-size: 1.5rem;
+            color: #3B5998;
+            margin-bottom: 20px;
+        }
+        .menu ul {
+            list-style: none;
+            padding: 0;
+        }
+        .menu ul li {
+            padding: 10px 0;
+            border-bottom: 1px solid #ddd;
+            transition: background-color 0.3s; /* Smooth transition for hover effect */
+        }
+        .menu ul li:hover {
+            background-color: #e1e1e1; /* Lighter shade on hover */
+        }
+        .menu ul li:last-child {
+            border-bottom: none;
+        }
+        .label{
+            font-weight: bold;
+            font-size: large;
+        }
+        /* Style for the Upload and Download buttons */
+        .secondary-button {
+                background-color: #fff; /* White background for a different look */
+                color: #3B5998; /* Cornflower blue text color */
+                padding: 10px 20px;
+                border: 2px solid #3B5998; /* Cornflower blue border */
+                border-radius: 5px;
+                cursor: pointer;
+                font-weight: 500;
+                font-size: 24px;
+                margin-bottom: 10px; /* Space above the box */
+                transition: background-color 0.3s, color 0.3s; /* Smooth transition for hover effect */
+        }
+
+        .secondary-button:hover {
+            background-color: #3B5998; /* Cornflower blue background on hover */
+            color: #fff; /* White text on hover */
+        }
+        .settings-segment-container {
+            display: flex;
+            justify-content: space-between; /* Adjust the space between the settings and the segment button */
+            align-items: center; /* Align items vertically in the center */
+            margin-top: 20px; /* Top margin for spacing from elements above */
+        }
+
+        .settings-container {
+            display: flex;
+            padding: 30px;
+            flex-direction: column; /* Stack label and input/select vertically */
+            justify-content: center; /* Center the content vertically */
+            margin-right: 20px; /* Right margin for spacing from the segment button */
+        }
+
+        .settings-container label, .settings-container select, .settings-container input {
+            font-size: 1.4rem; /* Other styles remain the same */
+        }
+         /* Add the modal and close button styles here */
+         .modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 1; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgb(0,0,0); /* Fallback color */
+            background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+        }
+
+        /* Modal Content/Box */
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto; /* 15% from the top and centered */
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%; /* Could be more or less, depending on screen size */
+        }
+
+        /* The Close Button */
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        /* Add styles for the image inside the modal */
+        .modal img {
+            max-width: 100%;
+            height: auto;
+        }
+
+    </style>
+</head>
+<script>
+   function uploadFile() {
+    const fileInput = document.getElementById('file-upload');
+    const files = fileInput.files;
+    const allowedExtensions = /(\.img|\.hdr)$/i;
+
+    if (files.length === 0) {
+        alert('Please select at least one file to upload');
+        return;
+    }
+
+    const formData = new FormData();
+    let isAllFilesValid = true;
+
+    // Append each file to the FormData object if it's of an allowed type
+    for (let i = 0; i < files.length; i++) {
+        if (!allowedExtensions.exec(files[i].name)) {
+            isAllFilesValid = false;
+            break;
+        }
+        formData.append('file', files[i]);
+    }
+
+    if (!isAllFilesValid) {
+        document.getElementById('statusMessage').textContent = 'Only .img and .hdr files are allowed!! Upload another file !!';
+        return;
+    }
+
+    // Clear the content of the result box when a new file is uploaded
+    const resultBox = document.getElementById('result-box');
+    resultBox.innerHTML = ''; // This line removes any existing content, including images
+
+    // AJAX request to the Flask route that handles file upload
+    fetch('/upload', {
+        method: 'POST',
+        body: formData,
+    })
+    .then(response => response.text())
+    .then(data => {
+        document.getElementById('statusMessage').textContent = '3D BMRI uploaded! Choose axis & slice to view after, then click Skull Strip';
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while uploading the files');
+    });
+}
+function downloadVolumes() {
+    // This function will be called when the 'Download BMRI' button is clicked
+    window.location.href = '/download_volumes'; // This will trigger the file download
+}
+
+
+function startSkullStripping() {
+    // Get the axis name and slice number values from the dropdown and textbox
+    const axisName = document.getElementById('axis-select').value;
+    const sliceNumber = document.getElementById('slice-number').value;
+
+    // Create a FormData object and append the axis name and slice number
+    const formData = new FormData();
+    formData.append('axis_name', axisName);
+    formData.append('slice_number', sliceNumber);
+
+    // Update status message and reset progress bar
+    document.getElementById('statusMessage').textContent = 'Skull stripping has started. Please wait...';
+    document.getElementById('progressBar').style.width = '0%';
+
+    // Simulate progress (adjust this part to reflect actual progress if possible)
+    let progress = 0;
+    const interval = setInterval(() => {
+        progress += 2; // Increment progress
+        document.getElementById('progressBar').style.width = `${progress}%`;
+        if (progress >= 100) clearInterval(interval); // Clear interval when progress reaches 100%
+    }, 1000); // Update progress every second for demonstration purposes
+
+    // AJAX request to the Flask route that handles the skull stripping
+    fetch('/skull_strip', {
+        method: 'POST',
+        body: formData,
+    })
+    .then(response => response.json()) // Change this as needed, e.g., if you're expecting JSON
+    .then(data => {
+        console.log('Response data:', data);
+        // Handle the response, e.g., display the processed image or update the message
+        document.getElementById('statusMessage').textContent = 'Skull stripping completed.';
+        document.getElementById('progressBar').style.width = '100%'; // Ensure progress bar is ful
+            // Assuming the JSON response contains the filename of the saved image
+        const resultImage = document.createElement('img');
+        resultImage.src = data.filename; 
+        resultImage.alt = 'Skull Stripped Result';
+
+        const resultBox = document.getElementById('result-box');
+        resultBox.innerHTML = ''; // Clear any existing content in the result box
+        resultBox.appendChild(resultImage);
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        document.getElementById('statusMessage').textContent = 'An error occurred during skull stripping.';
+    });
+}
+// Function to populate history items and assign click event to each
+function populateHistory() {
+            const historyList = document.getElementById('historyList');
+            for (let i = 1; i <= 10; i++) {
+                const li = document.createElement('li');
+                li.textContent = `Skull Stripped Image ${i}`;
+                li.onclick = function() { showModal(i); };
+                historyList.appendChild(li);
+            }
+        }
+
+function showModal(imageNumber) {
+            var modal = document.getElementById('myModal');
+            var modalImg = document.getElementById('modalImage');
+            modal.style.display = "block";
+            // Updated to use 'plot' prefix and '.png' extension
+            modalImg.src = `static/plot${imageNumber}.png`; 
+            modalImg.alt = `Skull Stripped Image ${imageNumber}`;
+        }
+
+function closeModal() {
+            var modal = document.getElementById('myModal');
+            modal.style.display = "none";
+        }
+
+window.onclick = function(event) {
+            var modal = document.getElementById('myModal');
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
+
+// Populate history items when the page loads
+window.onload = populateHistory;
+
+</script>
+<body>
+    <div class="menu">
+        <h2>History</h2>
+        <ul id="historyList">
+            <!-- History items will be populated by JavaScript -->
+        </ul>
+    </div>
+
+    <!-- Single Modal Structure -->
+    <div id="myModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <img id="modalImage" src="" alt="Skull Stripped Image">
+        </div>
+    </div>
+    <div class="content">
+        <h1>3D CompNet Skull Stripping</h1>
+
+        <!-- Upload BMRI and Download BMRI buttons -->
+        <div class="upload-download-container">
+            <div class="tooltip">
+                <label for="file-upload" class="secondary-button">Upload BMRI</label>
+                <input id="file-upload" name="file" type="file" style="display:none;" onchange="uploadFile()" multiple>
+                <span class="tooltiptext">Upload your BMRI here</span>
+            </div>
+            <div class="tooltip">
+                <button id="download-btn" class="secondary-button" onclick="downloadVolumes()">Download BMRI</button>
+                <span class="tooltiptext">Download Result</span>
+            </div>
+        </div>
+
+        <!-- Status Message and Progress Bar -->
+        <div class="status-progress-container">
+            <p id="statusMessage">Please Upload your 3D BMRI to Start</p>
+            <div id="progressBarContainer" class="progress-bar-container">
+                <div id="progressBar" class="progress-bar"></div>
+            </div>
+        </div>
+
+       <!-- Result Container -->
+        <div class="result-container">
+            <div id="result-box" class="result-box">
+            </div>
+        </div>
+
+        <!-- Settings and Segment Button Container -->
+        <div class="settings-segment-container">
+            <!-- Axis Selection Dropdown and Slice Number Text Box -->
+            <div class="settings-container" style="margin-top: 15px;">
+                <label for="axis-select">Choose an axis:</label>
+                <select name="axis" id="axis-select">
+                    <option value="x">X-axis</option>
+                    <option value="y">Y-axis</option>
+                    <option value="z" selected>Z-axis</option>
+                </select>
+            </div>
+
+            <div class="settings-container" style="margin-top: 10px;">
+                <label for="slice-number">Enter a slice number:</label>
+                <input type="number" id="slice-number" name="slice" min="1" max="90" value="1">
+            </div>
+
+            <!-- Segment Button with Tooltip -->
+            <div class="tooltip">
+                <button onclick="startSkullStripping()">Skull Strip</button>
+                <span class="tooltiptext">Start the segmentation process</span>
+            </div>
+        </div>
+
+    </div>
+</body>
+</html>
