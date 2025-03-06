@@ -1,6 +1,6 @@
 # 3D Complementary Segmentation Network (CompNet) Flask App
 
-Welcome to the **3D CompNet**, a web-based tool for skull stripping in Brain MRI scans using the 3D Complementary Segmentation Network (CompNet). This application is designed to improve the accuracy of volumetric brain tissue isolation, particularly in MRIs with pathological changes near the skull boundary, making it a valuable asset for neurological diagnosis and treatment planning.
+**3D CompNet**, a web-based tool for skull stripping in Brain MRI scans using the 3D Complementary Segmentation Network (CompNet). This application was designed as my final year research project, it addresses the problems that arise with skull stripping in volumetric Brain MRIs when there are pathological changes near the skull boundary.
 
 <img width="716" alt="image" src="https://github.com/user-attachments/assets/e2d44837-41e9-4154-b696-153185137db8" />
 
